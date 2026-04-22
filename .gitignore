@@ -1,0 +1,18 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Environment variables (for future use)
+.env
+
+# OS junk
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+scikit-learn   # or whatever library your model uses
+pandas
+numpy
+pickle5
