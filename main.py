@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pickle
 import os
-import pandas as pd
+import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -16,14 +16,11 @@ app.add_middleware(
 )
 
 base_dir = os.path.dirname(__file__)
-
-# Load movies dataframe
 movies = pickle.load(open(os.path.join(base_dir, "movies.pkl"), "rb"))
 
-# Compute similarity matrix at startup (no need for similarity.pkl)
-cv = CountVectorizer(max_features=5000, stop_words="english")
-vectors = cv.fit_transform(movies["tags"]).toarray()
-similarity = cosine_similarity(vectors)
+# ✅ Fewer features = much less memory
+cv = CountVectorizer(max_features=500, stop_words="english")
+vectors = cv.fit_transform(movies["tags"])  # keep sparse, don't use .toarray()
 
 @app.get("/")
 def home():
@@ -39,11 +36,12 @@ def recommend(data: dict):
 
     idx = movies[movies["title"] == movie_name].index[0]
 
-    distances = sorted(
-        list(enumerate(similarity[idx])),
-        reverse=True,
-        key=lambda x: x[1]
-    )
+    # ✅ Compute similarity only for the requested movie (not full matrix)
+    movie_vector = vectors[idx]
+    scores = cosine_similarity(movie_vector, vectors).flatten()
 
-    recommendations = [movies.iloc[i[0]].title for i in distances[1:6]]
+    # Get top 5 (skip index 0 = itself)
+    top_indices = np.argsort(scores)[::-1][1:6]
+    recommendations = [movies.iloc[i].title for i in top_indices]
+
     return {"recommendations": recommendations}
